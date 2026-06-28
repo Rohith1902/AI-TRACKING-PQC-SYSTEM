@@ -1,0 +1,1520 @@
+=== Output of ./security/key_protection.py ===
+=======================================================
+key_protection.py  —  self-test
+=======================================================
+
+[ Wrap/unwrap roundtrip ]
+  ✓ Wrapped (80 bytes) → unwrapped matches original
+
+[ Integrity check ]
+  ✓ Tampered blob correctly rejected
+
+[ Wrong KEK rejection ]
+  ✓ Wrong KEK correctly rejected
+
+[ Manager: store and retrieve ]
+  ✓ Stored and retrieved key successfully
+
+[ Auto-activation ]
+  ✓ Key auto-activated: state=active
+
+[ Access control: disallowed operation ]
+  ✓ Disallowed operation correctly rejected
+  ✓ Allowed operation correctly granted
+
+[ Usage limit enforcement ]
+  ✓ Key expired after 3 uses (max_usage=3)
+
+[ Lifecycle transitions ]
+  ✓ GENERATED → ACTIVE → EXPIRED → ZEROIZED
+
+[ Invalid transition rejection ]
+  ✓ ZEROIZED → ACTIVE correctly rejected
+
+[ Zeroization clears storage ]
+  ✓ Storage overwritten with zeros after zeroize
+
+[ Retrieve from zeroized key ]
+  ✓ Zeroized key correctly inaccessible
+
+[ Zeroize all (tamper response) ]
+  ✓ Zeroized all 5 keys on simulated tamper event
+
+[ Manager statistics ]
+  Total keys: 4
+  State counts: {'active': 2, 'expired': 1, 'zeroized': 1}
+  Access: 5 granted, 3 denied
+  ✓ Statistics tracked correctly
+
+  All checks passed.
+
+
+=== Output of ./security/zeroize_fsm.py ===
+=======================================================
+zeroize_fsm.py  —  self-test
+=======================================================
+
+[ Initial state ]
+  ✓ FSM starts in IDLE
+
+[ Region registration ]
+  ✓ Registered 3 memory regions
+
+[ Trigger (tamper critical) ]
+  ✓ State: IDLE → TRIGGERED
+
+[ Execute zeroization sequence ]
+  ✓ Final state: done
+
+[ Verify memory contents ]
+  ✓ All registered regions confirmed zeroed
+
+[ Multi-pass wipe verification ]
+  ✓ 3-pass wipe confirmed: ['0x0', '0xff', '0x0']
+
+[ Reset and host-command trigger ]
+  ✓ Reset → re-triggered via HOST_COMMAND → DONE
+
+[ Idempotent re-trigger ]
+  ✓ Second trigger ignored while not IDLE
+
+[ on_complete callback ]
+  ✓ on_complete callback fired after DONE
+
+[ Invalid transition rejection ]
+  ✓ IDLE → WIPING correctly rejected (must go via TRIGGERED)
+
+[ run() state precondition ]
+  ✓ run() correctly rejected from IDLE state
+
+[ FSM statistics ]
+  State: done
+  Trigger source: host_command
+  Regions: 3
+  Wipe operations: 24
+  Transitions: 8
+  ✓ Statistics tracked correctly
+
+  All checks passed.
+
+
+=== Output of ./security/tamper_detect.py ===
+=======================================================
+tamper_detect.py  —  self-test
+=======================================================
+
+[ Benign nominal readings ]
+  ✓ All 5 channels reported BENIGN
+
+[ Under-voltage attack ]
+  ✓ Under-voltage (1.2V) → CRITICAL: out_of_bounds [1.62,1.98]
+
+[ Tamper-mesh breach ]
+  ✓ Mesh breach (0→1) → CRITICAL: out_of_bounds [0,0]
+
+[ Clock glitch detection ]
+  ✓ Clock glitch (Δ=1.8ns) → CRITICAL: glitch delta=1.800
+
+[ Warning zone — marginal temperature ]
+  ✓ Marginal temp (115°C) → WARNING: near_bound
+
+[ Critical callback dispatch ]
+  ✓ on_critical callback fired for voltage
+
+[ Disarm / re-arm ]
+  ✓ Disarmed detector produces no events
+  ✓ Re-armed detector resumes monitoring
+
+[ Multi-tick simulation ]
+  Tick: 4, Critical events: 1
+  ✓ Multi-tick simulation tracked correctly
+
+[ Statistics summary ]
+  Total events: 10
+  Benign: 9, Warning: 0, Critical: 1
+  ✓ Statistics aggregated correctly
+
+  All checks passed.
+
+
+=== Output of ./security/secure_boot_model.py ===
+=======================================================
+secure_boot_model.py  —  self-test
+=======================================================
+
+[ Full successful boot chain ]
+  ✓ ROM_BOOT → PL_BITSTREAM
+  ✓ PL_BITSTREAM → PS_FIRMWARE
+  ✓ PS_FIRMWARE → APPLICATION
+  ✓ APPLICATION → RUNNING (boot complete)
+
+[ Tampered bitstream rejection ]
+  ✓ Tampered image correctly rejected, chain halted
+    Halt reason: Signature verification failed at stage rom_boot
+
+[ Wrong eFuse root key ]
+  ✓ Image signed under different root key correctly rejected
+
+[ Halted chain rejects further boot attempts ]
+  ✓ No further progress possible after halt
+
+[ on_halt callback dispatch ]
+  ✓ on_halt callback fired: Signature verification failed at stage rom_boot
+
+[ Recovery fallback (explicit opt-in) ]
+  ✓ Corrupt primary image → recovered via golden fallback
+
+[ Recovery fallback disabled by default ]
+  ✓ Recovery fallback is off unless explicitly enabled
+
+[ Stage key derivation determinism ]
+  ✓ Same root key → same derived stage key chain
+
+[ Measured boot log ]
+  ✓ 4 measurements recorded, all verified
+
+[ Boot chain statistics ]
+  Current stage: running
+  Stages completed: 4
+  Stages failed: 0
+  ✓ Statistics tracked correctly
+
+  All checks passed.
+
+
+=== Output of ./security/pepper_secret_store.py ===
+=======================================================
+pepper_secret_store.py  —  self-test
+=======================================================
+
+[ Initial pepper burn-in ]
+  ✓ Burned in pepper version 0
+
+[ Double burn-in rejection ]
+  ✓ Second burn-in correctly rejected
+
+[ Apply pepper to KDF input ]
+  ✓ Combined: pepper || salt || ikm (69 bytes)
+
+[ Use before burn-in ]
+  ✓ Application before burn-in correctly rejected
+
+[ Pepper rotation ]
+  ✓ Rotated to version 1, version 0 deprecated
+
+[ Legacy version access ]
+  ✓ Both old and new pepper versions retrievable
+
+[ Apply pepper with specific version ]
+  ✓ Different versions produce different combined output
+
+[ Version limit enforcement ]
+  ✓ Max versions (4) correctly enforced
+
+[ Auxiliary device secrets ]
+  ✓ Stored and retrieved 2 device secrets
+
+[ Missing secret handling ]
+  ✓ Missing secret correctly returns None
+
+[ TRNG-based pepper uniqueness ]
+  ✓ Independently burned-in peppers are unique
+
+[ Store statistics ]
+  Burned in: True
+  Current version: 1
+  Total versions: 2
+  Deprecated: 1
+  Device secrets: 2
+  ✓ Statistics tracked correctly
+
+  All checks passed.
+
+
+=== Output of ./security/kdf_sp800_108.py ===
+=======================================================
+kdf_sp800_108.py  —  self-test
+=======================================================
+
+[ Counter mode KDF ]
+  ✓ 32-byte key: 2574f3d3b5cd6f1232c2d83240a6befb...
+
+[ Counter mode — multi-block output ]
+  ✓ 96-byte key (3 PRF blocks)
+
+[ Determinism ]
+  ✓ Same inputs → same output
+
+[ Label-based domain separation ]
+  ✓ Different labels produce different keys
+
+[ Context-based domain separation ]
+  ✓ Different contexts produce different keys
+
+[ Feedback mode KDF ]
+  ✓ Feedback mode (with IV): 32-byte key
+
+[ Feedback mode with custom IV ]
+  ✓ IV changes output as expected
+
+[ Double-pipeline mode KDF ]
+  ✓ Double-pipeline mode: 32-byte key, distinct from other modes
+
+[ SP800108Engine multi-key derivation ]
+  ✓ Derived 4 unique keys from one master key
+
+[ Mode comparison ]
+  ✓ counter: ea19a5847a094f16578a9433...
+  ✓ feedback: ea19a5847a094f16578a9433...
+  ✓ double_pipeline: 997997ab08dcbc7f08bbbfd2...
+
+[ Engine statistics ]
+  Mode: counter, Total: 4
+  Labels: ['axi_enc', 'axi_enc', 'kyber_sess', 'dilithium_op']
+  ✓ Statistics tracked correctly
+
+[ AXI per-channel encryption keys ]
+  ✓ Derived 4 independent AXI channel keys
+
+  All checks passed.
+
+
+=== Output of ./security/hkdf_engine.py ===
+=======================================================
+hkdf_engine.py  —  self-test
+=======================================================
+
+[ HMAC-SHA256 primitive ]
+  ✓ HMAC-SHA256: 5031fe3d989c6d1537a013fa6e739da2...
+
+[ HKDF-Extract ]
+  ✓ PRK (32 bytes): df9937ad0b8a6a5b3aedcbeec45f6dd6...
+
+[ HKDF-Extract with no salt ]
+  ✓ PRK (no salt): 51fb72a6adebcef49d43b5de40674171...
+
+[ HKDF-Expand ]
+  ✓ Expand: 16, 32, 64, 128 bytes all correct
+
+[ Full HKDF pipeline ]
+  ✓ OKM (32 bytes): a71d20b7ae5c43f691a6990d33f48f20...
+
+[ Determinism ]
+  ✓ Same inputs → same OKM
+
+[ Context separation ]
+  ✓ Different info → different keys
+
+[ Kyber shared secret → session key ]
+  ✓ Kyber SS → 32-byte session key
+
+[ HKDFEngine key hierarchy ]
+  ✓ Derived 5 unique keys from master IKM
+
+[ Engine statistics ]
+  Labels: ['kyber_session', 'dilithium_sign', 'snn_feature', 'aes_enc', 'aes_mac']
+  ✓ Statistics tracked correctly
+
+[ PQC hybrid key derivation ]
+  ✓ Hybrid classical+PQC key derived (32 bytes)
+
+  All checks passed.
+
+
+=== Output of ./Crypto-hash/hash_ctrl.py ===
+=======================================================
+hash_ctrl.py  —  self-test
+=======================================================
+
+[ H - General hash (32 bytes) ]
+  Output: 42a66e8cf9bb7fe09e1b1e0f605314e3...
+  ✓ Length: 32 bytes
+
+[ G - Large hash (64 bytes) ]
+  Output: 42a66e8cf9bb7fe09e1b1e0f605314e3...
+  ✓ Length: 64 bytes
+
+[ J - Variable output hash ]
+  ✓ Tested J with outputs: 32, 64, 128 bytes
+
+[ PRF - Pseudorandom function ]
+  ✓ PRF outputs differ per counter (b=0,1,127,255)
+  ✓ PRF(s, b=0) vs PRF(s, b=1) differ in 32/32 bytes
+
+[ XOF - Seed expansion ]
+  ✓ XOF supports seed expansion: 168, 512, 1344 bytes
+
+[ Dispatcher hash_dispatch() ]
+  ✓ Dispatcher matches direct calls
+
+[ Kyber key generation workflow ]
+  ✓ Seed → 1344-byte matrix, hash → 32 bytes
+
+[ Dilithium signing workflow ]
+  ✓ Seed → G(64B), PRF with counters for error sampling
+
+[ Determinism ]
+  ✓ All functions deterministic
+
+  All checks passed.
+
+
+=== Output of ./Crypto-hash/keccak_f1600.py ===
+=======================================================
+keccak_f1600.py  —  self-test
+=======================================================
+
+[ Keccak-f[1600] basic functionality ]
+  ✓ Output length correct (25 lanes)
+  ✓ All lanes 64-bit integers in [0, 2^64)
+
+[ Determinism ]
+  ✓ Same input → same output
+
+[ Collision resistance ]
+  ✓ Different inputs → different outputs
+
+[ Diffusion ]
+  ✓ High diffusion (25/25 lanes differ)
+
+  All checks passed.
+
+
+=== Output of ./Crypto-hash/shake128.py ===
+=======================================================
+shake128.py  —  self-test
+=======================================================
+
+[ SHAKE128 on empty message ]
+  Output (32 bytes): 4db3344113633c1b135849d6a3baa55b351fa137e8c9a6854a524d9e5360c361
+  Length: 32 bytes  ✓
+
+[ SHAKE128 on 'abc' ]
+  Output (32 bytes): dc9e4cddc17917daad015c4c75de87faec179f9f3913f943154108df5d09d754
+  Length: 32 bytes  ✓
+
+[ Variable output length ]
+  ✓ Tested output lengths: 16, 32, 64, 100 bytes
+
+[ Determinism ]
+  ✓ Same input → same output
+
+[ Input sensitivity ]
+  ✓ Different inputs differ in 32/32 bytes
+
+[ Kyber seed expansion (32 bytes → 1344 bytes) ]
+  ✓ Expanded 16 bytes → 1344 bytes
+
+[ FIPS 202 known-answer test (basic validation) ]
+  ✓ KAT validation passed
+
+  All checks passed.
+
+
+=== Output of ./Crypto-hash/shake256.py ===
+=======================================================
+shake256.py  —  self-test
+=======================================================
+
+[ SHAKE256 on empty message ]
+  Output (64 bytes): 92c8af51ba1a588e828204affaba1c0dd2c5629829d4cc49ec52a3a07c2661fcd8ea8cf55a4295ddca7ea354cc12d517c84a881ba1988e7ca51bab9490218e00
+  Length: 64 bytes  ✓
+
+[ SHAKE256 on 'abc' ]
+  Output (64 bytes): d18da5a3c0b3a6f24593cc77352ac8c6cd217a02974ebea54a9c6f151fa10ff370877327b033da748c941b4a4c667e2c6fd5d441b9a03610f62d2b87e5b12e30
+  Length: 64 bytes  ✓
+
+[ Variable output length ]
+  ✓ Tested output lengths: 32, 64, 128, 256 bytes
+
+[ Determinism ]
+  ✓ Same input → same output
+
+[ Input sensitivity ]
+  ✓ Different inputs differ in 63/64 bytes
+
+[ SHAKE256 vs SHAKE128 ]
+  ✓ SHAKE256 ≠ SHAKE128 for same input
+
+[ HKDF key derivation use case ]
+  ✓ Derived 32 bytes → 128 bytes (HKDF-like)
+
+[ FIPS 202 known-answer test (basic validation) ]
+  ✓ KAT validation passed
+
+  All checks passed.
+
+
+=== Output of ./dilithium/dilithium_keygen.py ===
+Traceback (most recent call last):
+  File "/mnt/Apps/Project_bin/PQC/PQC/Code/PQC - BEST - ARCH 1/./dilithium/dilithium_keygen.py", line 54, in <module>
+    from params import KyberParams
+ModuleNotFoundError: No module named 'params'
+
+=== Output of ./dilithium/dilithium_sign.py ===
+Traceback (most recent call last):
+  File "/mnt/Apps/Project_bin/PQC/PQC/Code/PQC - BEST - ARCH 1/./dilithium/dilithium_sign.py", line 52, in <module>
+    from ntt import ntt_kyber
+ModuleNotFoundError: No module named 'ntt'
+
+=== Output of ./dilithium/dilithium_pack_unpack.py ===
+Traceback (most recent call last):
+  File "/mnt/Apps/Project_bin/PQC/PQC/Code/PQC - BEST - ARCH 1/./dilithium/dilithium_pack_unpack.py", line 42, in <module>
+    from dilithium_keygen import DILITHIUM_PARAMS, DILITHIUM_2, DILITHIUM_3, DILITHIUM_5
+  File "/mnt/Apps/Project_bin/PQC/PQC/Code/PQC - BEST - ARCH 1/dilithium/dilithium_keygen.py", line 54, in <module>
+    from params import KyberParams
+ModuleNotFoundError: No module named 'params'
+
+=== Output of ./dilithium/dilithium_retry_counter.py ===
+=======================================================
+dilithium_retry_counter.py  —  self-test
+=======================================================
+
+[ Initialization ]
+  ✓ Initialized for dilithium2 (max_retries=576)
+
+[ Zero-retry signature ]
+  ✓ Accepted with 0 retries
+
+[ Signature with retries ]
+  ✓ Accepted after 5 retries
+
+[ Max retry enforcement ]
+  ✓ Max retry (576) correctly enforced
+
+[ Warning threshold ]
+  ✓ Warning issued at 100 retries
+
+[ Statistical simulation (100 signatures) ]
+  Total signatures: 100
+  Avg retries: 3.80 (expect ~4)
+  Max retries seen: 8
+  Acceptance rate: 100.0%
+  Healthy: True
+  ✓ Statistics computed correctly
+
+[ Parameter set support ]
+  ✓ dilithium2: max_retries=576
+  ✓ dilithium3: max_retries=576
+  ✓ dilithium5: max_retries=576
+
+[ Health check ]
+  ✓ Healthy counter reports healthy
+
+  All checks passed.
+
+
+=== Output of ./dilithium/dilithium_verify.py ===
+Traceback (most recent call last):
+  File "/mnt/Apps/Project_bin/PQC/PQC/Code/PQC - BEST - ARCH 1/./dilithium/dilithium_verify.py", line 51, in <module>
+    from hash_ctrl import shake256
+ModuleNotFoundError: No module named 'hash_ctrl'
+
+=== Output of ./dilithium/dilithium_model.py ===
+=======================================================
+dilithium_model.py  —  self-test
+=======================================================
+
+[ Dilithium2 comprehensive test ]
+
+Test Results:
+  Correctness: PASS
+  Parameter Sets: PASS
+  Determinism: PASS
+  Security: PASS
+  Randomness: PASS
+
+Performance (Dilithium2):
+  KeyGen: 0.002 ms
+  Sign: 0.001 ms
+  Verify: 0.001 ms
+
+[ Testing all parameter sets ]
+  ✓ dilithium2: keygen/sign/verify successful
+  ✓ dilithium3: keygen/sign/verify successful
+  ✓ dilithium5: keygen/sign/verify successful
+
+[ Batch signature operations ]
+  ✓ Generated and verified 20 signatures
+
+[ Final statistics ]
+  Parameter Sets Tested: 3
+  Total Test Iterations: 10
+  Batch Operations: 20
+  Total Signatures: 30
+
+  All checks passed.
+
+
+=== Output of ./Snn/synapse_memory.py ===
+=======================================================
+synapse_memory.py  —  self-test
+=======================================================
+
+[ Quantization roundtrip ]
+  ✓ 4-bit: 0.37 → code=3 → 0.4286 (step=0.1429)
+  ✓ 8-bit: 0.37 → code=47 → 0.3701 (step=0.0079)
+  ✓ 16-bit: 0.37 → code=12124 → 0.3700 (step=0.0000)
+
+[ Clamping out-of-range values ]
+  ✓ Out-of-range values clamped: +5.0→127 (max), -5.0→-127 (symmetric min, not full range -128)
+
+[ Precision comparison ]
+  ✓ 16-bit error (0.000014) < 4-bit error (0.019457)
+
+[ CSR sparse storage roundtrip ]
+  ✓ CSR stored 3 non-zero entries (sparsity=66.67%), dense roundtrip within quantization error
+
+[ Memory footprint comparison ]
+  ✓ 64x64 @ 99.8% sparse: Dense=32768 bits, Sparse=1752 bits (sparse wins at this scale/density)
+
+[ SynapseMemory boot-time load ]
+  ✓ Boot-loaded 4x3 weights, read back within quantization tolerance
+
+[ Read-only mode blocks writes ]
+  ✓ Write rejected in READ_ONLY mode, value unchanged
+
+[ Mode switch enables writes ]
+  ✓ Write accepted after switching to READ_WRITE mode: new value=0.992
+
+[ Online learning — single delta ]
+  ✓ Delta +0.1 applied: 0.197 → 0.299
+
+[ Online learning — batch delta matrix ]
+  ✓ Batch update applied 2 non-zero deltas correctly
+
+[ Batch update rejected in READ_ONLY mode ]
+  ✓ Batch update correctly rejected (0 applied) in READ_ONLY
+
+[ Sparse storage mode ]
+  ✓ 8x8 sparse matrix: 96.88% sparse, dense=256b vs sparse=256b
+
+[ Memory bank statistics ]
+  Shape: (4, 3), Precision: 8-bit
+  Mode: read_write, Boot loaded: True
+  Writes: 1, Reads: 15
+  ✓ Statistics tracked correctly
+
+[ Unsupported precision rejection ]
+  ✓ 12-bit precision correctly rejected (only 4/8/16 supported)
+
+  All checks passed.
+
+
+=== Output of ./Snn/feature_encoder.py ===
+=======================================================
+feature_encoder.py  —  self-test
+=======================================================
+
+[ Feature normalization ]
+  ✓ Normalize: 50→0.5, -10→0.0 (clamp), 150→1.0 (clamp)
+
+[ Rate coding ]
+  ✓ value=0.0 → 0 spikes; value=1.0 → 20 spikes
+
+[ Rate coding monotonicity ]
+  ✓ Spike counts increase monotonically: [0, 5, 10, 15, 20]
+
+[ Temporal coding ]
+  ✓ value=0.1 → spike@90ms; value=0.9 → spike@10ms
+
+[ Temporal coding — zero value ]
+  ✓ value=0.0 → no spike (feature absent)
+
+[ Population coding ]
+  ✓ value=0.5 → peak response at neuron 4 (expected center)
+
+[ Population coding — extremes ]
+  ✓ value=0.0 → peak@neuron0; value=1.0 → peak@neuron8
+
+[ Population → binary spikes ]
+  ✓ Probabilities ['0.04', '0.71', '0.71', '0.04'] → spikes [1, 0, 1, 0]
+
+[ Multi-channel encoder ]
+  ✓ Encoded 3 heterogeneous channels in one pass
+
+[ Unregistered channel handling ]
+  ✓ Unregistered channel silently ignored
+
+[ Total input neuron count ]
+  ✓ Total SNN input neurons required: 8
+
+[ Encoder statistics ]
+  Channels: 3
+  Names: ['dilithium_retries', 'packet_latency_ms', 'tamper_voltage']
+  Input neurons: 8
+  Encode calls: 6
+  ✓ Statistics tracked correctly
+
+  All checks passed.
+
+
+=== Output of ./Snn/lif_neuron.py ===
+=======================================================
+lif_neuron.py  —  self-test
+=======================================================
+
+[ Subthreshold input ]
+  ✓ Weak input (0.01/tick × 50) → no spikes
+
+[ Strong constant input ]
+  ✓ Strong input (0.6/tick × 50) → 13 spikes
+
+[ Hard reset after spike ]
+  ✓ V_mem reset to 0.0 immediately after spiking
+
+[ Refractory period ]
+  ✓ 3-tick refractory period correctly blocks strong input
+
+[ Passive leak decay ]
+  ✓ V_mem decayed from 0.8 → 0.7610 (expected 0.7610)
+
+[ Firing rate calculation ]
+  ✓ Firing rate: 1000.0 Hz over 100 ticks (100 spikes)
+
+[ LIFNeuronLayer batch stepping ]
+  ✓ 4-neuron layer single step: spikes=[0, 0, 0, 0]
+
+[ Layer — independent dynamics ]
+  ✓ Spike counts per neuron: [8, 0, 5] (strong > medium > silent)
+
+[ Layer dimension validation ]
+  ✓ Mismatched input vector length correctly rejected
+
+[ Fixed-point LIF neuron ]
+  ✓ Fixed-point neuron spiked 13 times over 50 ticks
+
+[ Fixed-point vs floating-point parity ]
+  ✓ Float spikes=13, Fixed-point spikes=13 (within tolerance)
+
+[ Reset state ]
+  ✓ reset_state() restores resting potential, clears refractory
+
+  All checks passed.
+
+
+=== Output of ./Snn/refractory_counter.py ===
+=======================================================
+refractory_counter.py  —  self-test
+=======================================================
+
+[ Basic load/tick/expire cycle ]
+  ✓ Loaded with 3 ticks, expired after exactly 3 ticks
+
+[ Absolute mode input gating ]
+  ✓ I_syn=5.0 gated to 0.0 while refractory (ABSOLUTE)
+  ✓ I_syn=5.0 passes through unchanged (5.0) after expiry
+
+[ Relative mode threshold scaling ]
+  ✓ Relative mode: input unblocked, threshold scale 2.00 → 1.50
+
+[ Threshold scale after recovery ]
+  ✓ Threshold scale returns to 1.0 once fully recovered
+
+[ Re-load while active ]
+  ✓ Re-load while active resets counter to full period (3)
+
+[ Duty cycle calculation ]
+  ✓ Duty cycle = 0.100 (2 active / 20 elapsed ticks)
+
+[ RefractoryBank load from spike vector ]
+  ✓ Bank active vector: [True, False, True, False]
+
+[ RefractoryBank input gating ]
+  ✓ Gated vector: [0.0, 5.0, 0.0, 5.0]
+
+[ RefractoryBank combined step() ]
+  ✓ step() loaded neuron 0, gated its input: [0.0, 10.0, 10.0]
+
+[ Dimension validation ]
+  ✓ Mismatched spike vector length correctly rejected
+
+[ Bank statistics ]
+  Currently active: 0
+  Avg duty cycle: 0.120
+  Total loads: 5
+  ✓ Statistics tracked correctly
+
+[ Reset behavior ]
+  ✓ reset() clears active counters, preserves accumulated stats
+
+[ Integration-style refractory gating sequence ]
+  ✓ Gating sequence over 6 ticks: [1.0, 0.0, 1.0, 1.0, 1.0, 1.0]
+
+  All checks passed.
+
+
+=== Output of ./Snn/snn_core.py ===
+Traceback (most recent call last):
+  File "/mnt/Apps/Project_bin/PQC/PQC/Code/PQC - BEST - ARCH 1/./Snn/snn_core.py", line 53, in <module>
+    from neuro_array import NeuroArray, matvec_spike_current
+ModuleNotFoundError: No module named 'neuro_array'
+
+=== Output of ./Snn/lateral_inhibitor.py ===
+=======================================================
+lateral_inhibitor.py  —  self-test
+=======================================================
+
+[ Distance functions ]
+  ✓ LINEAR(0,7)=7, RING(0,7)=1 (wraparound), LINEAR(2,5)=3
+
+[ Hard WTA — single spike ]
+  ✓ Single spike at idx 2 passes through: [0, 0, 1, 0, 0]
+
+[ Hard WTA — tie resolution ]
+  ✓ Three-way tie [0, 1, 1, 0, 1] → winner idx 1: [0, 1, 0, 0, 0]
+
+[ Hard WTA — suppression window ]
+  ✓ Suppressed neuron 1 correctly blocked from firing: [0, 0, 0, 0]
+
+[ Hard WTA — suppression expiry ]
+  ✓ Suppression expired after window, neuron 1 fires: [0, 1, 0]
+
+[ Hard WTA — silent tick ]
+  ✓ Silent tick produces no winner
+
+[ Soft inhibition — penalty distribution ]
+  ✓ Penalties: ['0.011', '0.135', '0.607', '0.000', '0.607', '0.135', '0.011'] (symmetric, zero at winner, decaying with distance)
+
+[ Soft inhibition — membrane potential adjustment ]
+  ✓ V_mem before: [0.5, 0.6, 0.7, 1.2, 0.7, 0.6, 0.5]
+  ✓ V_mem after:  [0.489, 0.465, 0.093, 1.2, 0.093, 0.465, 0.489]
+
+[ Soft inhibition — radius cutoff ]
+  ✓ Radius=2 cutoff: neuron at distance 4 has penalty=0.0, neuron at distance 2 (boundary) has penalty=0.135
+
+[ Soft inhibition — ring topology ]
+  ✓ Ring topology: neuron 7 and neuron 1 (both distance 1 from winner 0) get equal penalty 0.607
+
+[ Soft inhibition — multiple winners ]
+  ✓ Two simultaneous winners (0,4) cross-inhibit each other (0.0002); neuron 2 gets larger combined penalty 0.135 from proximity to both
+
+[ Dimension validation ]
+  ✓ HardLateralInhibitor rejects mismatched spike vector
+  ✓ SoftLateralInhibitor rejects mismatched spike vector
+
+[ Statistics ]
+  WTA: {'n_neurons': 4, 'total_ticks': 2, 'ticks_with_winner': 1, 'total_suppressions': 3, 'currently_suppressed': 3}
+  Soft: apply_count=1, avg_penalty=1.506
+  ✓ Statistics tracked correctly for both inhibitor types
+
+  All checks passed.
+
+
+=== Output of ./Snn/spike_generator.py ===
+=======================================================
+spike_generator.py  —  self-test
+=======================================================
+
+[ Threshold-crossing spike decision ]
+  ✓ Above/below/exactly-at threshold decisions correct
+
+[ Vectorized threshold decision ]
+  ✓ Membrane vector [1.2, 0.5, 1.0, 0.0, 2.5] → spikes [1, 0, 1, 0, 1]
+
+[ Spike bus packing — single word ]
+  ✓ 16 spikes → 1 bus word: 0b1101
+
+[ Spike bus packing — multi-word ]
+  ✓ 40 spikes → 3 bus words
+
+[ Pack/unpack roundtrip ]
+  ✓ 40-neuron spike vector roundtrips through bus packing
+
+[ AER encoding ]
+  ✓ 9-neuron dense vector (3 firing) → 3 AER events
+
+[ AER decode roundtrip ]
+  ✓ AER events decode back to identical dense vector
+
+[ AER sequence encoding ]
+  ✓ 3-tick sequence → 3 sparse events (silent tick correctly produces none)
+
+[ AER FIFO push/pop ]
+  ✓ Pushed 2, popped oldest first (FIFO order preserved)
+
+[ AER FIFO back-pressure ]
+  ✓ FIFO at depth=2 correctly applies back-pressure, dropped=1
+
+[ Batch push_many / pop_all ]
+  ✓ Batch pushed 5 events, drained all 5 via pop_all
+
+[ Full pipeline integration ]
+  ✓ Membrane [1.5, 0.2, 0.9, 1.1, 0.0] → spikes [1, 0, 0, 1, 0] → bus 0b1001 → 2 AER events queued
+
+  All checks passed.
+
+
+=== Output of ./Snn/threat_score.py ===
+=======================================================
+threat_score.py  —  self-test
+=======================================================
+
+[ Hamming similarity ]
+  ✓ Identical=1.0, complementary=0.0, partial-match=0.75
+
+[ PatternLibrary — exact match ]
+  ✓ Exact match found: replay_attack (similarity=1.0)
+
+[ PatternLibrary — best partial match ]
+  ✓ Best partial match: replay_attack (similarity=0.8)
+
+[ Severity weighting ]
+  ✓ glitch_burst exact match weighted to 0.8 (severity_weight=0.8)
+
+[ Empty library handling ]
+  ✓ Empty library correctly returns null match
+
+[ Anomaly score computation ]
+  ✓ Pattern-dominated score=0.95, novel-activity-only score=0.8
+
+[ Threat score quantization ]
+  ✓ 0.0→0, 1.0→255, 0.5→128 (8-bit threat_score[7:0])
+
+[ Threshold → level mapping ]
+  ✓ 0.0→NONE, 0.20→INFO, 0.50→GUARDED, 0.65→ELEVATED, 0.99→CRITICAL
+
+[ Compactor — EMA smoothing ]
+  ✓ Single-tick spike to 1.0 smoothed to 0.300 (not full jump)
+
+[ Compactor — debounce window ]
+  ✓ Debounced only after 3 consecutive ticks at the same level
+
+[ Full pipeline — known pattern detection ]
+  ✓ Exact pattern match: raw_score=1.0 immediately; smoothed threat_score_code ramps 76→225 over sustained exposure (compaction working as designed)
+
+[ Full pipeline — silent tick ]
+  ✓ All-zero output → threat_level=NONE
+
+[ event_cnt accumulation ]
+  ✓ event_cnt correctly accumulated to 4
+
+[ Multi-tick run() and statistics ]
+  Tick count: 4, Max level: LOW, Ticks above NONE: 3
+  ✓ Multi-tick run + statistics tracked correctly
+
+[ Integration — consuming SNNCoreOutput.output_spikes ]
+Traceback (most recent call last):
+  File "/mnt/Apps/Project_bin/PQC/PQC/Code/PQC - BEST - ARCH 1/./Snn/threat_score.py", line 646, in <module>
+    from snn_core import SNNCore
+  File "/mnt/Apps/Project_bin/PQC/PQC/Code/PQC - BEST - ARCH 1/Snn/snn_core.py", line 53, in <module>
+    from neuro_array import NeuroArray, matvec_spike_current
+ModuleNotFoundError: No module named 'neuro_array'
+
+=== Output of ./kyber/kyber_encaps.py ===
+Traceback (most recent call last):
+  File "/mnt/Apps/Project_bin/PQC/PQC/Code/PQC - BEST - ARCH 1/./kyber/kyber_encaps.py", line 49, in <module>
+    from params import KyberParams
+ModuleNotFoundError: No module named 'params'
+
+=== Output of ./kyber/kyber_keygen.py ===
+Traceback (most recent call last):
+  File "/mnt/Apps/Project_bin/PQC/PQC/Code/PQC - BEST - ARCH 1/./kyber/kyber_keygen.py", line 49, in <module>
+    from params import KyberParams
+ModuleNotFoundError: No module named 'params'
+
+=== Output of ./kyber/kyber_model.py ===
+Traceback (most recent call last):
+  File "/mnt/Apps/Project_bin/PQC/PQC/Code/PQC - BEST - ARCH 1/./kyber/kyber_model.py", line 57, in <module>
+    from kyber_ctrl import KyberController, KYBER_PARAM_SETS
+  File "/mnt/Apps/Project_bin/PQC/PQC/Code/PQC - BEST - ARCH 1/kyber/kyber_ctrl.py", line 50, in <module>
+    from kyber_keygen import KyberKeyGen, KYBER_512, KYBER_768, KYBER_1024
+  File "/mnt/Apps/Project_bin/PQC/PQC/Code/PQC - BEST - ARCH 1/kyber/kyber_keygen.py", line 49, in <module>
+    from params import KyberParams
+ModuleNotFoundError: No module named 'params'
+
+=== Output of ./kyber/kyber_decaps.py ===
+Traceback (most recent call last):
+  File "/mnt/Apps/Project_bin/PQC/PQC/Code/PQC - BEST - ARCH 1/./kyber/kyber_decaps.py", line 51, in <module>
+    from params import KyberParams
+ModuleNotFoundError: No module named 'params'
+
+=== Output of ./kyber/kyber_ctrl.py ===
+Traceback (most recent call last):
+  File "/mnt/Apps/Project_bin/PQC/PQC/Code/PQC - BEST - ARCH 1/./kyber/kyber_ctrl.py", line 50, in <module>
+    from kyber_keygen import KyberKeyGen, KYBER_512, KYBER_768, KYBER_1024
+  File "/mnt/Apps/Project_bin/PQC/PQC/Code/PQC - BEST - ARCH 1/kyber/kyber_keygen.py", line 49, in <module>
+    from params import KyberParams
+ModuleNotFoundError: No module named 'params'
+
+=== Output of ./kyber/kyber_compress.py ===
+=======================================================
+kyber_compress.py  —  self-test
+=======================================================
+
+[ Single coefficient compression ]
+  ✓ 4 bits: coeff=1234, compressed=6, error=14 (max=105.0)
+  ✓ 10 bits: coeff=1234, compressed=380, error=1 (max=2.0)
+  ✓ 11 bits: coeff=1234, compressed=759, error=0 (max=1.0)
+  ✓ 12 bits: coeff=1234, compressed=1518, error=0 (max=1.0)
+
+[ Polynomial compression roundtrip ]
+  ✓ 4 bits: 128 bytes, max error 104 (bound 105.0)
+  ✓ 10 bits: 320 bytes, max error 2 (bound 2.0)
+  ✓ 11 bits: 352 bytes, max error 1 (bound 1.0)
+
+[ Batch polynomial compression ]
+  ✓ Compressed 3 polys: 960 bytes
+
+[ Compression statistics ]
+  4 bits: 128 bytes/poly, ratio=0.33, max_error=105.00
+  10 bits: 320 bytes/poly, ratio=0.83, max_error=2.00
+  11 bits: 352 bytes/poly, ratio=0.92, max_error=1.00
+  12 bits: 384 bytes/poly, ratio=1.00, max_error=1.00
+
+[ Kyber ciphertext compression (u || v) ]
+  ✓ Kyber512 ciphertext: 768 bytes
+    u (2×10 bits): 640 bytes
+    v (1×4 bits): 128 bytes
+
+[ Compression depth comparison ]
+   1 bits:  32 B, ratio=0.083, error=255
+   2 bits:  64 B, ratio=0.167, error=255
+   3 bits:  96 B, ratio=0.250, error=208
+   4 bits: 128 B, ratio=0.333, error=104
+   5 bits: 160 B, ratio=0.417, error=52
+   6 bits: 192 B, ratio=0.500, error=26
+   7 bits: 224 B, ratio=0.583, error=13
+   8 bits: 256 B, ratio=0.667, error=6
+   9 bits: 288 B, ratio=0.750, error=3
+  10 bits: 320 B, ratio=0.833, error=2
+  11 bits: 352 B, ratio=0.917, error=1
+  12 bits: 384 B, ratio=1.000, error=0
+
+  All checks passed.
+
+
+=== Output of ./math-core/ntt.py ===
+=============================================
+ntt.py  —  self-test
+=============================================
+  Zero polynomial  ✓
+  Identity polynomial NTT = [1,1,...,1]  ✓
+  Linearity NTT(a+b) = NTT(a)+NTT(b)  ✓
+
+  All checks passed.
+
+
+=== Output of ./math-core/mod_add_sub.py ===
+=======================================================
+mod_add_sub.py  —  self-test
+=======================================================
+  Kyber: add errors=0 sub errors=0  ✓
+  Dilithium: add errors=0 sub errors=0  ✓
+  Edge cases  ✓
+
+  All checks passed.
+
+
+=== Output of ./math-core/intt.py ===
+=======================================================
+intt.py  —  self-test
+=======================================================
+  Kyber: NTT→INTT identity, 100 polys, 100 errors  ⚠️ CALIBRATING
+  Dilithium: NTT→INTT identity, 100 polys, 100 errors  ⚠️ CALIBRATING
+
+  Basic structure tests completed.
+
+  NOTE: This implementation uses pure modular arithmetic.
+  Final hardware calibration against intt_engine.sv pending.
+
+
+=== Output of ./math-core/montgomery_reduce.py ===
+=======================================================
+montgomery_reduce.py  —  self-test
+=======================================================
+
+[ Kyber Montgomery reduce  q=3329 R=2^16 ]
+  100000 random trials: 0 errors  ✓
+
+[ Kyber Montgomery multiply ]
+  100000 random trials: 0 errors  ✓
+
+[ Dilithium Montgomery reduce  q=8380417 R=2^32 ]
+  100000 random trials: 0 errors  ✓
+
+[ Poly coefficient-wise mul ]
+  256-coeff Kyber poly  ✓
+
+  All checks passed.
+
+
+=== Output of ./math-core/barrett_reduce.py ===
+=======================================================
+barrett_reduce.py  —  self-test
+=======================================================
+
+[ Kyber  q=3329 ]
+  100000 random trials: 0 errors  ✓
+  Edge cases (0, q-1, q, 2q-1, 2q)  ✓
+
+[ Dilithium  q=8380417 ]
+  100000 random trials: 0 errors  ✓
+  Edge cases  ✓
+
+[ Poly helper ]
+  256-coeff Kyber poly  ✓
+
+  All checks passed.
+
+
+=== Output of ./math-core/pointwise_mul.py ===
+=======================================================
+pointwise_mul.py  —  self-test
+=======================================================
+
+[ Kyber pointwise multiply structure ]
+  ✓ Product: 256 coefficients, all in [0, 3329)
+
+[ Kyber scalar multiply ]
+  ✓ Scalar multiply (x100): 256 coefficients in [0, 3329)
+
+[ Dilithium pointwise multiply structure ]
+  ✓ Product: 256 coefficients, all in [0, 8380417)
+
+  All checks passed.
+
+
+=== Output of ./math-core/butterfly.py ===
+=============================================
+butterfly.py  —  self-test
+=============================================
+
+[ CT → GS roundtrip (result = 2a, 2b mod q) ]
+  50000 roundtrips, 0 errors  ✓
+
+[ CT correctness: a' + b' = 2a mod q ]
+  50000 trials, 0 errors  ✓
+
+  All checks passed.
+
+
+=== Output of ./config/new.py ===
+============================================================
+PQC-SNN SoC  —  params.py  self-test
+============================================================
+
+[ Kyber variants ]
+  Kyber- 512  KyberParams(variant=512, K=2, Q=3329, N=256, ETA1=3, ETA2=2, DU=10, DV=4, pk=800B, sk=1632B, ct=768B)
+  Kyber- 768  KyberParams(variant=768, K=3, Q=3329, N=256, ETA1=2, ETA2=2, DU=10, DV=4, pk=1184B, sk=2400B, ct=1088B)
+  Kyber-1024  KyberParams(variant=1024, K=4, Q=3329, N=256, ETA1=2, ETA2=2, DU=11, DV=5, pk=1568B, sk=3168B, ct=1568B)
+
+[ Dilithium variants ]
+  Dilithium2  DilithiumParams(variant=2, K=4, L=4, Q=8380417, N=256, ETA=2, TAU=39, BETA=78, GAMMA1=131072, GAMMA2=95232, OMEGA=80, pk=1312B, sk=2560B, sig=2420B)
+  Dilithium3  DilithiumParams(variant=3, K=6, L=5, Q=8380417, N=256, ETA=4, TAU=49, BETA=196, GAMMA1=524288, GAMMA2=261888, OMEGA=55, pk=1952B, sk=4032B, sig=3293B)
+  Dilithium5  DilithiumParams(variant=5, K=8, L=7, Q=8380417, N=256, ETA=2, TAU=60, BETA=120, GAMMA1=524288, GAMMA2=261888, OMEGA=75, pk=2592B, sk=4896B, sig=4595B)
+
+[ SNN params ]
+  inputs=64, neurons=128, outputs=4, tau_m=20, V_thresh=1.0, W_max=1.0
+
+[ System params ]
+  AXI=32b, DMA_burst=16, MEM=256KB, IRQs=16
+
+[ Twiddle factor sanity checks ]
+  Kyber    zeta^128 ≡ -1 mod q  ✓
+  Dilithium zeta^256 ≡ -1 mod q  ✓
+  Kyber    n_inv check  ✓
+  Dilithium n_inv check  ✓
+
+  All checks passed.
+
+
+=== Output of ./config/params.py ===
+============================================================
+PQC-SNN SoC  —  params.py  self-test
+============================================================
+
+[ Kyber variants ]
+  Kyber- 512  KyberParams(variant=512, K=2, Q=3329, N=256, ETA1=3, ETA2=2, DU=10, DV=4, pk=800B, sk=1632B, ct=768B)
+  Kyber- 768  KyberParams(variant=768, K=3, Q=3329, N=256, ETA1=2, ETA2=2, DU=10, DV=4, pk=1184B, sk=2400B, ct=1088B)
+  Kyber-1024  KyberParams(variant=1024, K=4, Q=3329, N=256, ETA1=2, ETA2=2, DU=11, DV=5, pk=1568B, sk=3168B, ct=1568B)
+
+[ Dilithium variants ]
+  Dilithium2  DilithiumParams(variant=2, K=4, L=4, Q=8380417, N=256, ETA=2, TAU=39, BETA=78, GAMMA1=131072, GAMMA2=95232, OMEGA=80, pk=1312B, sk=2560B, sig=2420B)
+  Dilithium3  DilithiumParams(variant=3, K=6, L=5, Q=8380417, N=256, ETA=4, TAU=49, BETA=196, GAMMA1=524288, GAMMA2=261888, OMEGA=55, pk=1952B, sk=4032B, sig=3293B)
+  Dilithium5  DilithiumParams(variant=5, K=8, L=7, Q=8380417, N=256, ETA=2, TAU=60, BETA=120, GAMMA1=524288, GAMMA2=261888, OMEGA=75, pk=2592B, sk=4896B, sig=4595B)
+
+[ SNN params ]
+  inputs=64, neurons=128, outputs=4, tau_m=20, V_thresh=1.0, W_max=1.0
+
+[ System params ]
+  AXI=32b, DMA_burst=16, MEM=256KB, IRQs=16
+
+[ Twiddle factor sanity checks ]
+  Kyber    zeta^128 ≡ -1 mod q  ✓
+  Dilithium zeta^256 ≡ -1 mod q  ✓
+  Kyber    n_inv check  ✓
+  Dilithium n_inv check  ✓
+
+  All checks passed.
+
+
+=== Output of ./Randomness/trng_model.py ===
+=======================================================
+trng_model.py  —  self-test
+=======================================================
+
+[ TRNG initialization ]
+  ✓ TRNG initialized with seed
+
+[ Entropy collection ]
+  ✓ Collected 32 bytes of entropy
+
+[ Entropy distribution ]
+  ✓ 256-byte sample has 169 unique values
+
+[ Health test (SP 800-90B) ]
+  ✓ Health test: PASS (entropy ≈ 5.61 bits/byte)
+
+[ Determinism ]
+  ✓ Same seed → same entropy (deterministic)
+
+[ Reseeding ]
+  ✓ Different seeds → different entropy
+
+[ Long-term entropy collection ]
+  ✓ Collected 100 × 32-byte blocks (3200 bytes)
+
+[ Multiple health tests ]
+  ✓ Health tests: 10/10 passed
+
+  All checks passed.
+
+
+=== Output of ./Randomness/nonce_manager.py ===
+=======================================================
+nonce_manager.py  —  self-test
+=======================================================
+
+[ Nonce manager initialization ]
+  ✓ Initialized
+
+[ Nonce retrieval ]
+  ✓ Retrieved nonce: 000000000000000000000000
+
+[ Nonce monotonicity ]
+  ✓ Nonces monotonically increase
+    Nonce 1: epoch=0, counter=0
+    Nonce 2: epoch=0, counter=1
+    Nonce 3: epoch=0, counter=2
+
+[ Nonce uniqueness ]
+  ✓ Generated 100/100 unique nonces
+
+[ Batch nonce allocation ]
+  ✓ Allocated 16 unique nonces in batch
+
+[ Freshness verification ]
+  ✓ Nonce freshness check passed
+
+[ Replay detection ]
+  ✓ Correctly detects and prevents replays
+
+[ Usage label tracking ]
+  ✓ Allocation log: {'challenge': 2, 'signature': 1, 'session': 1}
+
+[ Epoch management ]
+  ✓ Epoch increments on reset (0 → 1)
+
+[ Challenge/response workflow ]
+  ✓ Challenge/response nonces unique and fresh
+
+[ Manager statistics ]
+  Total issued: 50
+  Epoch: 0
+  Counter: 64
+  Pool remaining: 14
+  ✓ Statistics tracked correctly
+
+  All checks passed.
+
+
+=== Output of ./Randomness/trng_health_tests.py ===
+=======================================================
+trng_health_tests.py  —  self-test
+=======================================================
+
+[ Health tests on good entropy ]
+HealthTestResult(
+  Rep Count:      PASS (max run: 1)
+  Adapt Prop:     PASS (ratio: 0.520)
+  Run Test:       PASS (max run: 9)
+  Entropy:        PASS (5.84 bits/byte)
+  ────────────────────────────
+  OVERALL:        ✓ PASS
+)
+
+[ Individual test verification ]
+  Repetition Count: PASS (max consecutive: 1)
+  Adaptive Prop:    PASS (proportion: 0.520)
+  Run Test:         PASS (max run length: 9)
+  Entropy:          PASS (5.84 bits/byte)
+
+[ Multiple entropy blocks ]
+  ✓ Health test: 20/20 blocks passed
+
+[ Detect low-entropy data ]
+  Repetitive data (0xAA×32): FAIL
+    → Correctly identified as bad entropy
+
+  All checks passed.
+
+
+=== Output of ./Randomness/random_mask_generator.py ===
+=======================================================
+random_mask_generator.py  —  self-test
+=======================================================
+
+[ Mask generator initialization ]
+  ✓ Initialized
+
+[ Single mask generation ]
+  ✓ Generated 256-coefficient mask in [0, 3329)
+
+[ Mask uniqueness ]
+  ✓ Generated 3 unique masks
+
+[ Batch mask generation ]
+  ✓ Generated batch of 8 masks
+
+[ Masking roundtrip ]
+  ✓ Masking roundtrip successful
+
+[ Inverse mask correctness ]
+  ✓ Inverse masks satisfy: (mask + inv_mask) mod q = 0
+
+[ Dilithium modulus masks ]
+  ✓ Generated mask for DILITHIUM_Q=8380417
+
+[ Usage label tracking ]
+  ✓ Label tracking: {'kyber_mult': 2, 'dilithium_sign': 1}
+
+[ Reseeding ]
+  ✓ Reseed produces different masks
+
+[ Kyber masking workflow ]
+  ✓ Full masking workflow successful
+
+[ Generator statistics ]
+  Total generated: 20
+  Generation log: {'test': 20}
+  ✓ Statistics tracked correctly
+
+  All checks passed.
+
+
+=== Output of ./Randomness/ctr_drbg.py ===
+=======================================================
+ctr_drbg.py  —  self-test
+=======================================================
+
+[ Crypto backend: hashlib fallback ]
+
+[ CTR_DRBG instantiation ]
+  ✓ Instantiated with seed
+
+[ Pseudorandom generation ]
+  ✓ Generated: 16, 32, 64, 256 bytes
+
+[ Determinism ]
+  ✓ Same seed → same pseudorandom output
+
+[ Sensitivity to seed ]
+  ✓ Different seeds differ in 32/32 bytes
+
+[ Reseeding ]
+  ✓ Reseed changes output
+
+[ Large output ]
+  ✓ Generated 4096 bytes (256 AES blocks)
+
+[ Reseed counter tracking ]
+  ✓ Reseed counter increments per request
+
+[ Kyber/Dilithium use case ]
+  ✓ DRBG provides distinct randomness per call
+
+  All checks passed.
+
+
+=== Output of ./Randomness/salt_generator.py ===
+=======================================================
+salt_generator.py  —  self-test
+=======================================================
+
+[ Salt generator initialization ]
+  ✓ Initialized with seed
+
+[ Salt retrieval ]
+  ✓ Retrieved salt: 91e9b3f89a71cbd7fea986a196a9f8f0...
+
+[ Determinism ]
+  ✓ Same seed → same first salt
+
+[ Salt uniqueness ]
+  ✓ Generated 20/20 unique salts
+
+[ Batch salt allocation ]
+  ✓ Allocated 8 salts in batch
+
+[ Usage label tracking ]
+  ✓ Allocation log: {'kyber_kem': 2, 'dilithium_sign': 1, 'hkdf_key': 1}
+
+[ Pool management ]
+  ✓ Pool size decreases on allocation (16 → 15)
+
+[ Reseeding ]
+  ✓ Reseed changes salt output
+
+[ Crypto workflow simulation ]
+  ✓ Generated distinct salts for KEM, DSA, HKDF
+
+[ Generator statistics ]
+  Total generated: 25
+  Pool remaining:  7
+  Rekey counter:   9
+  ✓ Stats tracked correctly
+
+  All checks passed.
+
+
+=== Output of ./samplers/cbd_sampler.py ===
+=======================================================
+cbd_sampler.py  —  self-test
+=======================================================
+
+[ CBD(2) coefficient range ]
+  ✓ All CBD(2) coefficients in [-2, 2]
+
+[ CBD(2) polynomial sampling ]
+  ✓ Generated 256-coeff polynomial, all in [-2, 2]
+
+[ CBD(2) distribution analysis ]
+  Distribution: {-2: 1612, -1: 6320, 0: 9644, 1: 6368, 2: 1656}
+  ✓ CBD(2) produces centered distribution
+
+[ CBD(3) coefficient range ]
+  ✓ All CBD(3) coefficients in [-3, 3]
+
+[ CBD(3) polynomial sampling ]
+  ✓ Generated 256-coeff polynomial, all in [-3, 3]
+
+[ Determinism ]
+  ✓ Same randomness → same polynomial
+
+[ Input sensitivity ]
+  ✓ Different seeds differ in 196/256 coefficients
+
+[ Kyber key generation workflow ]
+  ✓ Generated e1, e2 error polynomials for key generation
+
+[ Kyber encapsulation noise ]
+  ✓ Generated encapsulation noise using CBD(2)
+
+[ Coefficient statistics ]
+  Mean: -0.1094 (expect ~0 for centered)
+  Variance: 0.9724
+  ✓ CBD distribution is appropriately centered
+
+  All checks passed.
+
+
+=== Output of ./samplers/sampler_ctrl.py ===
+Traceback (most recent call last):
+  File "/mnt/Apps/Project_bin/PQC/PQC/Code/PQC - BEST - ARCH 1/./samplers/sampler_ctrl.py", line 52, in <module>
+    from salt_generator import SaltGenerator, get_salt
+ModuleNotFoundError: No module named 'salt_generator'
+
+=== Output of ./samplers/noise_sampler.py ===
+=======================================================
+noise_sampler.py  —  self-test
+=======================================================
+
+[ Noise sampler initialization ]
+  ✓ Initialized
+
+[ Kyber CBD noise generation ]
+  ✓ Generated Kyber error (η=2,3) and secret noise
+
+[ Dilithium rejection sampling noise ]
+  ✓ Generated Dilithium error and signature noise
+
+[ Algorithm selection ]
+  ✓ CBD and rejection algorithms selected correctly
+    Algorithm usage: {'cbd': 1, 'rejection': 1}
+
+[ Determinism ]
+  ✓ Same seed → same noise
+
+[ Batch noise generation ]
+  ✓ Generated 5 unique noise polynomials
+
+[ Noise type tracking ]
+  ✓ Noise type tracking: {'kyber_error_2': 2, 'dilithium_signature': 3}
+
+[ Kyber key generation ]
+  ✓ Generated e1, e2, s for Kyber key generation
+
+[ Dilithium signature generation ]
+  ✓ Generated y polynomials for Dilithium signatures
+
+[ Mask noise generation ]
+  ✓ Generated masking noise
+
+[ Hybrid Kyber+Dilithium ]
+  ✓ Generated noise for hybrid Kyber+Dilithium
+
+[ Sampler statistics ]
+  Total polynomials: 15
+  Allocation: {'kyber_error_2': 10, 'dilithium_signature': 5}
+  Algorithms: {'cbd': 10, 'rejection': 5}
+  ✓ Statistics tracked correctly
+
+  All checks passed.
+
+
+=== Output of ./samplers/rejection_sampler.py ===
+=======================================================
+rejection_sampler.py  —  self-test
+=======================================================
+
+[ Gaussian PDF evaluation ]
+  ✓ PDF(0, σ=95) = 1.0000
+  ✓ PDF(σ, σ=95) = 0.6065
+
+[ Acceptance probability ]
+  ✓ P(accept|0, σ=95) = 1.0000
+  ✓ P(accept|100, σ=95) = 0.5746
+
+[ Single coefficient rejection sampling ]
+  ✓ Accepted coefficient: -141 (consumed 3 bytes)
+
+[ Polynomial rejection sampling ]
+  ✓ Generated 256-coeff polynomial
+
+[ Different sigma parameters ]
+  ✓ Sampled with σ=95.0
+  ✓ Sampled with σ=60.0
+
+[ Determinism ]
+  ✓ Same randomness → same polynomial
+
+[ Sensitivity to randomness ]
+  ✓ Different inputs differ in 256/256 coefficients
+
+[ Coefficient distribution analysis ]
+  Mean: 19.3320 (expect ≈ 0)
+  Variance: 9191.8676 (expect ≈ 9025.0000)
+  ✓ Distribution centered and scaled correctly
+
+[ Dilithium signature workflow ]
+  ✓ Generated y polynomial for signature (σ=60.0)
+
+[ Acceptance rate estimation ]
+  σ=95.0: ~45.7% acceptance rate
+  σ=60.0: ~29.6% acceptance rate
+  ✓ Acceptance rates computed
+
+  All checks passed.
+
+
